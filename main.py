@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 if __name__ == '__main__':
 
-    DREMIO_ENDPOINT = "<SET_VALUE>"
+    DREMIO_ENDPOINT = "https://api.dremio.cloud/v0/projects/<PROJECT_ID>"
     DREMIO_PAT = "<SET_VALUE>"
 
     api = dremio_api.DremioAPI(DREMIO_PAT, DREMIO_ENDPOINT, timeout=60)
