@@ -87,7 +87,7 @@ class DremioAPI:
                     verify=self.verify
                 )
                 if job_results.status_code != 200:
-                    Exception(f'Error - {job_results.text}')
+                    raise Exception(f'Error - {job_results.text}')
                 job_results_json = job_results.json()
                 new_rows = job_results_json['rows']
                 current_offset += len(new_rows)
