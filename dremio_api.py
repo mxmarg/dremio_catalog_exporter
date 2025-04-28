@@ -19,8 +19,8 @@ class DremioAPI:
             raise Exception(f"Unable to log into {self.dremio_url}. Please validate endpoint and PAT.")
 
     def get_dataset_id(self, dataset: str):
-        dataset_path = dataset.replace(".", "/").replace('"', '')
-        url = self.dremio_url + '/api/v3/catalog/by-path/'  + dataset_path
+        dataset_path = dataset.replace(".","/").replace('"','')
+        url = self.dremio_url + '/catalog/by-path/'  + dataset_path
 
         logger.info(f"Getting ID of {dataset}")
         response = requests.request("GET", url, headers=self.headers, timeout=self.timeout, verify=self.verify)
@@ -35,7 +35,7 @@ class DremioAPI:
 
     def get_catalog(self, catalog_id=""):
         response = requests.get(
-            self.dremio_url + f'/api/v3/catalog/{catalog_id}',
+            self.dremio_url + f'/catalog/{catalog_id}',
             headers=self.headers, timeout=self.timeout, verify=self.verify
             )
         data = response.json()
@@ -45,7 +45,7 @@ class DremioAPI:
         logger.debug("Waiting for job completion...")
         while True:
             response = requests.get(
-                self.dremio_url + '/api/v3/job/' + job_id,
+                self.dremio_url + '/job/' + job_id,
                 headers=self.headers,
                 timeout=self.timeout,
                 verify=self.verify
@@ -64,7 +64,7 @@ class DremioAPI:
     def post_sql_query(self, sql: str):
         logger.info(sql)
         response = requests.post(
-            self.dremio_url + '/api/v3/sql', 
+            self.dremio_url + '/sql', 
             headers=self.headers,
             json={"sql": sql },
             timeout=self.timeout, verify=self.verify
@@ -85,7 +85,7 @@ class DremioAPI:
                 page = 'offset=' + str(current_offset) + '&limit=' + str(limit)
                 logger.debug("Paging " + page)
                 job_results = requests.get(
-                    self.dremio_url + '/api/v3/job/' + job_id + '/results?' + page,
+                    self.dremio_url + '/job/' + job_id + '/results?' + page,
                     headers=self.headers,
                     timeout=self.timeout,
                     verify=self.verify

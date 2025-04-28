@@ -16,6 +16,11 @@ logger = logging.getLogger(__name__)
 if __name__ == '__main__':
 
     DREMIO_ENDPOINT = "<SET_VALUE>"
+    # For Dremio Software:
+    # DREMIO_ENDPOINT = "https://<DREMIO_HOST>[:<DREMIO_PORT>]/api/v3"
+    # For Dremio Cloud:
+    # DREMIO_ENDPOINT = "https://api.[eu.]dremio.cloud/v0/projects/<PROJECT_ID>"
+
     DREMIO_PAT = "<SET_VALUE>"
 
     api = dremio_api.DremioAPI(DREMIO_PAT, DREMIO_ENDPOINT, timeout=60)
