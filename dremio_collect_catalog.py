@@ -44,6 +44,8 @@ def collect_dremio_catalog(api: dremio_api.DremioAPI, catalog_root, space_select
 
 def collect_dremio_catalog_children(api: dremio_api.DremioAPI, data_sources: list, catalog_id, data_source_path=None, source_selector=[[]]) -> list:
     catalog_sub_tree = api.get_catalog(catalog_id)
+    object_grants = api.get_catalog(f"{catalog_id}/grants")
+    grants = object_grants.get("grants")
     try:
         if catalog_sub_tree["entityType"] in ["source", "space"]:
             catalog_sub_tree["path"] = [catalog_sub_tree["name"]]
@@ -53,7 +55,8 @@ def collect_dremio_catalog_children(api: dremio_api.DremioAPI, data_sources: lis
             "object_path": catalog_sub_tree.get("path", []),
             "parent": [],
             "parent_id": "",
-            "parent_type": ""
+            "parent_type": "",
+            "grants": grants
         })
     except KeyError:
         logger.info(f"Skipping catalog ID {catalog_id}")
@@ -67,19 +70,24 @@ def collect_dremio_catalog_children(api: dremio_api.DremioAPI, data_sources: lis
             else:
                 logger.info(f"Traversing FOLDER {child['path']} ...")
                 data_sources = collect_dremio_catalog_children(api, data_sources, catalog_id, data_source_path, source_selector)
-        elif child['type'] == 'DATASET' and dataset_type == 'PROMOTED':
+        elif child['type'] == 'DATASET' and (dataset_type == 'PROMOTED' or dataset_type == 'DIRECT'):
             type_name = 'PDS'
+            pds_grants = api.get_catalog(f"{catalog_id}/grants")
+            grants = pds_grants.get("grants")
             data_sources.append({
                 "id": catalog_id,
                 "object_type": type_name,
                 "object_path": child['path'],
                 "parent": data_source_path,
                 "parent_id": "",
-                "parent_type": "SOURCE"
+                "parent_type": "SOURCE",
+                "grants": grants
             })
         elif child['type'] == 'DATASET' and dataset_type == 'VIRTUAL':
             type_name = 'VDS'
             vds_graph = api.get_catalog(catalog_id=f"{catalog_id}/graph")
+            vds_grants = api.get_catalog(f"{catalog_id}/grants")
+            grants = vds_grants.get("grants")
             try:
                 parents = vds_graph['parents']
                 if len(parents) == 0:
@@ -90,18 +98,21 @@ def collect_dremio_catalog_children(api: dremio_api.DremioAPI, data_sources: lis
                         "object_path": child['path'],
                         "parent": [],
                         "parent_id": "",
-                        "parent_type": ""
+                        "parent_type": "",
+                        "grants": grants
                     })
-                    
-                for parent in parents:
-                    data_sources.append({
-                        "id": catalog_id,
-                        "object_type": type_name, 
-                        "object_path": child['path'],
-                        "parent": parent['path'],
-                        "parent_id": parent['id'],
-                        "parent_type": parent['datasetType']
-                    })
+                
+                else:
+                    for parent in parents:
+                        data_sources.append({
+                            "id": catalog_id,
+                            "object_type": type_name, 
+                            "object_path": child['path'],
+                            "parent": parent['path'],
+                            "parent_id": parent['id'],
+                            "parent_type": parent['datasetType'],
+                            "grants": grants
+                        })
             except KeyError as e:
                 logger.error(f"Data lineage for view {child['path']} could not be retrieved")
                 data_sources.append({
@@ -110,7 +121,8 @@ def collect_dremio_catalog_children(api: dremio_api.DremioAPI, data_sources: lis
                     "object_path": child['path'],
                     "parent": [],
                     "parent_id": "",
-                    "parent_type": ""
+                    "parent_type": "",
+                    "grants": grants
                 })
 
             # # Add column entries

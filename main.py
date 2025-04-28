@@ -23,9 +23,12 @@ if __name__ == '__main__':
 
     DREMIO_PAT = "<SET_VALUE>"
 
+    space_selector=set()
+    source_selector=[[]]
+
     api = dremio_api.DremioAPI(DREMIO_PAT, DREMIO_ENDPOINT, timeout=60)
 
-    catalog_entries = dremio_collect_catalog.get_catalog_entries(api)
+    catalog_entries = dremio_collect_catalog.get_catalog_entries(api, space_selector, source_selector)
     json_filename = 'dremio_catalog_entries.json'
     with open(json_filename, 'w') as f:
         json.dump(catalog_entries, f)

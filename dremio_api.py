@@ -6,7 +6,16 @@ logger = logging.getLogger(__name__)
 class DremioAPI:
 
     def __init__(self, dremio_pat: str, dremio_url: str, timeout=10, verify=False):
-        self.dremio_url = dremio_url.rstrip("/")
+
+        dremio_url = dremio_url.rstrip("/")
+        if "dremio.cloud/v0/projects" in dremio_url:
+            logger.info(f"Dremio Cloud endpoint detected as {dremio_url}")
+        else:
+            logger.info("Dremio Software endpoint detected")
+            if not dremio_url.endswith("/api/v3"):
+                dremio_url = dremio_url + "/api/v3"
+        logger.info(f"Configured Dremio REST API Endpoint as {dremio_url}")
+        self.dremio_url = dremio_url
         self.timeout = timeout
         self.verify = verify
         self.headers = {
@@ -14,7 +23,7 @@ class DremioAPI:
             'Authorization': 'Bearer ' + dremio_pat
         }
         # Validate token
-        response = requests.request("GET", self.dremio_url + '/api/v3/catalog', headers=self.headers, timeout=self.timeout, verify=self.verify)
+        response = requests.request("GET", self.dremio_url + '/catalog', headers=self.headers, timeout=self.timeout, verify=self.verify)
         if response.status_code != 200:
             raise Exception(f"Unable to log into {self.dremio_url}. Please validate endpoint and PAT.")
 
@@ -39,6 +48,7 @@ class DremioAPI:
             headers=self.headers, timeout=self.timeout, verify=self.verify
             )
         data = response.json()
+        logger.debug(f"GET /catalog/{catalog_id}")
         return data
 
     def get_query_info(self, job_id: str):
