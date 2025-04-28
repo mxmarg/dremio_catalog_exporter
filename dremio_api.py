@@ -5,17 +5,21 @@ logger = logging.getLogger(__name__)
 
 class DremioAPI:
 
-    def __init__(self, dremio_pat, dremio_url, timeout=10, verify=False):
-        self.dremio_url = dremio_url
+    def __init__(self, dremio_pat: str, dremio_url: str, timeout=10, verify=False):
+        self.dremio_url = dremio_url.rstrip("/")
         self.timeout = timeout
         self.verify = verify
         self.headers = {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer ' + dremio_pat
         }
+        # Validate token
+        response = requests.request("GET", self.dremio_url + '/api/v3/catalog', headers=self.headers, timeout=self.timeout, verify=self.verify)
+        if response.status_code != 200:
+            raise Exception(f"Unable to log into {self.dremio_url}. Please validate endpoint and PAT.")
 
     def get_dataset_id(self, dataset: str):
-        dataset_path = dataset.replace(".","/").replace('"','')
+        dataset_path = dataset.replace(".", "/").replace('"', '')
         url = self.dremio_url + '/api/v3/catalog/by-path/'  + dataset_path
 
         logger.info(f"Getting ID of {dataset}")
@@ -53,7 +57,7 @@ class DremioAPI:
                 break
             elif job_state in {"CANCELED", "FAILED"}:
                 status = job_state + " - " + data.get("errorMessage", "")
-                logger.debug(status)
+                logger.warning(status)
                 break
         return job_state
 
@@ -87,7 +91,7 @@ class DremioAPI:
                     verify=self.verify
                 )
                 if job_results.status_code != 200:
-                    raise Exception(f'Error - {job_results.text}')
+                    Exception(f'Error - {job_results.text}')
                 job_results_json = job_results.json()
                 new_rows = job_results_json['rows']
                 current_offset += len(new_rows)
