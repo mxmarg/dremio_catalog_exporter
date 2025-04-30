@@ -23,6 +23,9 @@ if __name__ == '__main__':
 
     DREMIO_PAT = "<SET_VALUE>"
 
+    # To limit scope, set the space names and source folder paths that you want to export:
+    # source_selector = [["my-s3-bucket", "folder1"], ["my-glue-catalog", "db1"]]
+    # space_selector = {"DremioSpace1", "UseCase2"}
     space_selector=set()
     source_selector=[[]]
 
